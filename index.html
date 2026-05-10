@@ -3,150 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Child | مستقبل جيناتك بين يديك</title>
+    <title>طفلي المستقبلي - دمج الملامح بالذكاء الاصطناعي</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Cairo', sans-serif;
-            background-color: #050505;
-            color: #ffffff;
-            overflow-x: hidden;
+            font-family: 'Tajawal', sans-serif;
+            background-color: #0d0d0d;
+            color: white;
         }
-        .neon-text {
-            text-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 20px rgba(168, 85, 247, 0.4);
+        .neon-border {
+            box-shadow: 0 0 15px #bc13fe, 0 0 5px #bc13fe;
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
+        .preview-img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #bc13fe;
+            display: none; /* مخفي افتراضياً حتى يتم اختيار صورة */
         }
-        .gradient-btn {
-            background: linear-gradient(90deg, #7c3aed, #db2777);
+        .upload-label {
             transition: all 0.3s ease;
         }
-        .gradient-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.4);
-        }
-        .upload-box {
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            transition: border-color 0.3s;
-        }
-        .upload-box:hover {
-            border-color: #7c3aed;
+        .upload-label:hover {
+            transform: scale(1.05);
+            filter: brightness(1.2);
         }
     </style>
 </head>
-<body>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-    <nav class="p-6 flex justify-between items-center max-w-7xl mx-auto">
-        <div class="text-2xl font-bold tracking-tighter neon-text">MY CHILD</div>
-        <a href="admin.html" class="text-sm text-gray-500 hover:text-white transition">دخول المسؤول</a>
-    </nav>
-
-    <header class="text-center py-16 px-4">
-        <h1 class="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
-            توقع ملامح طفلك المستقبلي
+    <header class="text-center mb-10">
+        <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-2">
+            مرحباً بك في عالم طفلي
         </h1>
-        <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">
-            باستخدام أقوى تقنيات الذكاء الاصطناعي، ندمج جينات الوالدين لنمنحك صورة فائقة الواقعية بدقة 4K لمستقبل عائلتك.
-        </p>
+        <p class="text-gray-400">اكتشف ملامح طفلك المستقبلي بدقة الذكاء الاصطناعي</p>
     </header>
 
-    <main class="max-w-5xl mx-auto px-4 pb-20">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <main class="w-full max-w-4xl bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-2xl">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
             
-            <div class="glass-card p-8">
-                <h2 class="text-xl font-bold mb-6 flex items-center">
-                    <i class="fas fa-dna ml-2 text-purple-500"></i> صور الوالدين
-                </h2>
-                
-                <div class="space-y-4">
-                    <label class="block">
-                        <span class="text-gray-400 mb-2 block">صورة الأم (70% من الملامح)</span>
-                        <div class="upload-box rounded-xl p-6 text-center cursor-pointer">
-                            <i class="fas fa-venus text-pink-500 text-2xl mb-2"></i>
-                            <p class="text-sm text-gray-500">اسحب صورة الأم هنا</p>
-                            <input type="file" class="hidden" accept="image/*">
-                        </div>
-                    </label>
-
-                    <label class="block">
-                        <span class="text-gray-400 mb-2 block">صورة الأب (30% من الملامح)</span>
-                        <div class="upload-box rounded-xl p-6 text-center cursor-pointer">
-                            <i class="fas fa-mars text-blue-500 text-2xl mb-2"></i>
-                            <p class="text-sm text-gray-500">اسحب صورة الأب هنا</p>
-                            <input type="file" class="hidden" accept="image/*">
-                        </div>
-                    </label>
-                </div>
-            </div>
-
-            <div class="glass-card p-8 flex flex-col justify-between">
-                <div>
-                    <h2 class="text-xl font-bold mb-6 flex items-center">
-                        <i class="fas fa-sliders-h ml-2 text-pink-500"></i> تخصيص الطفل
-                    </h2>
-
-                    <div class="space-y-6">
-                        <div>
-                            <label class="text-gray-400 mb-2 block">الجنس</label>
-                            <select id="gender" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-purple-500">
-                                <option value="boy">ولد</option>
-                                <option value="girl">بنت</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="text-gray-400 mb-2 block">المرحلة العمرية</label>
-                            <select id="age" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-purple-500">
-                                <option value="5">طفل (5 سنوات)</option>
-                                <option value="10">يافع (10 سنوات)</option>
-                                <option value="teen">مراهق (14-16 سنة)</option>
-                                <option value="25">شاب (25 سنة)</option>
-                            </select>
-                        </div>
+            <div class="flex flex-col items-center">
+                <label class="upload-label cursor-pointer flex flex-col items-center">
+                    <div id="motherPlaceholder" class="w-32 h-32 flex items-center justify-center bg-gray-800 rounded-full border-2 border-dashed border-purple-500 mb-3">
+                        <span class="text-3xl">👩‍🦰</span>
                     </div>
-                </div>
+                    <img id="motherPreview" class="preview-img mb-3" src="" alt="معاينة صورة الأم">
+                    <span class="bg-purple-600 px-4 py-2 rounded-full text-sm font-bold">رفع صورة الأم</span>
+                    <input type="file" id="motherInput" class="hidden" accept="image/*">
+                </label>
+            </div>
 
-                <button id="generateBtn" class="gradient-btn w-full py-5 rounded-2xl font-bold text-xl mt-8 shadow-lg">
-                    إنشاء ملامح الطفل الآن
-                </button>
+            <div class="flex flex-col items-center">
+                <label class="upload-label cursor-pointer flex flex-col items-center">
+                    <div id="fatherPlaceholder" class="w-32 h-32 flex items-center justify-center bg-gray-800 rounded-full border-2 border-dashed border-blue-500 mb-3">
+                        <span class="text-3xl">👨‍🦱</span>
+                    </div>
+                    <img id="fatherPreview" class="preview-img mb-3" src="" alt="معاينة صورة الأب" style="border-color: #3b82f6;">
+                    <span class="bg-blue-600 px-4 py-2 rounded-full text-sm font-bold">رفع صورة الأب</span>
+                    <input type="file" id="fatherInput" class="hidden" accept="image/*">
+                </label>
+            </div>
+
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <div class="flex flex-col">
+                <label class="mb-2 text-sm text-gray-400">الجنس المتوقع</label>
+                <select id="gender" class="bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none focus:border-purple-500">
+                    <option value="boy">ولد</option>
+                    <option value="girl">بنت</option>
+                </select>
+            </div>
+            <div class="flex flex-col">
+                <label class="mb-2 text-sm text-gray-400">عمر الطفل</label>
+                <select id="age" class="bg-gray-800 border border-gray-700 rounded-lg p-3 outline-none focus:border-purple-500">
+                    <option value="5">5 سنوات</option>
+                    <option value="10">10 سنوات</option>
+                    <option value="teen">مراهق (15 سنة)</option>
+                    <option value="25">شاب (25 سنة)</option>
+                </select>
             </div>
         </div>
 
-        <div id="resultArea" class="mt-12 hidden">
-            <div class="glass-card p-4 text-center">
-                <p class="text-purple-400 mb-4 animate-pulse">جاري دمج الجينات وتحليل الملامح...</p>
-                <div class="aspect-square max-w-md mx-auto bg-white/5 rounded-2xl overflow-hidden relative">
-                    <img id="finalImage" src="" class="w-full h-full object-cover">
+        <button id="generateBtn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95">
+            إنشاء ملامح الطفل الآن
+        </button>
+
+        <div id="resultArea" class="hidden mt-10 text-center border-t border-gray-800 pt-10">
+            <h2 class="text-2xl font-bold mb-4">ملامح طفلك المستقبلي</h2>
+            <div class="relative inline-block neon-border rounded-2xl overflow-hidden">
+                <img id="finalImage" src="" alt="النتيجة" class="max-w-full h-auto rounded-2xl transition-opacity duration-1000">
+                <div id="loadingOverlay" class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
                 </div>
-                <button class="mt-6 text-gray-400 hover:text-white border border-white/10 px-6 py-2 rounded-lg">
-                    <i class="fas fa-download ml-2"></i> تحميل الصورة بدقة 4K
-                </button>
             </div>
+            <p class="mt-4 text-gray-400 italic">تم الدمج بنسبة 70% ملامح الأم و 30% ملامح الأب</p>
         </div>
+
     </main>
 
-    <footer class="text-center py-10 border-t border-white/5 text-gray-600 text-sm">
-        <p>© 2024 MY CHILD - جميع الحقوق محفوظة لذكاء الموقع الاصطناعي</p>
+    <footer class="mt-10 text-gray-600 text-sm">
+        &copy; 2026 جميع الحقوق محفوظة لموقع طفلي
     </footer>
 
-    <script>
-        const generateBtn = document.getElementById('generateBtn');
-        const resultArea = document.getElementById('resultArea');
-
-        generateBtn.addEventListener('click', () => {
-            // إظهار منطقة النتيجة وبدء الأنميشن
-            resultArea.classList.remove('hidden');
-            resultArea.scrollIntoView({ behavior: 'smooth' });
-            
-            // هنا سيتم ربط الكود بملف المحرك script.js لاحقاً لإرسال الصور لـ Gemini
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
