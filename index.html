@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Child | مستقبل جيناتك بين يديك</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #050505;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        .neon-text {
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 20px rgba(168, 85, 247, 0.4);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+        }
+        .gradient-btn {
+            background: linear-gradient(90deg, #7c3aed, #db2777);
+            transition: all 0.3s ease;
+        }
+        .gradient-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.4);
+        }
+        .upload-box {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            transition: border-color 0.3s;
+        }
+        .upload-box:hover {
+            border-color: #7c3aed;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="p-6 flex justify-between items-center max-w-7xl mx-auto">
+        <div class="text-2xl font-bold tracking-tighter neon-text">MY CHILD</div>
+        <a href="admin.html" class="text-sm text-gray-500 hover:text-white transition">دخول المسؤول</a>
+    </nav>
+
+    <header class="text-center py-16 px-4">
+        <h1 class="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
+            توقع ملامح طفلك المستقبلي
+        </h1>
+        <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">
+            باستخدام أقوى تقنيات الذكاء الاصطناعي، ندمج جينات الوالدين لنمنحك صورة فائقة الواقعية بدقة 4K لمستقبل عائلتك.
+        </p>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 pb-20">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <div class="glass-card p-8">
+                <h2 class="text-xl font-bold mb-6 flex items-center">
+                    <i class="fas fa-dna ml-2 text-purple-500"></i> صور الوالدين
+                </h2>
+                
+                <div class="space-y-4">
+                    <label class="block">
+                        <span class="text-gray-400 mb-2 block">صورة الأم (70% من الملامح)</span>
+                        <div class="upload-box rounded-xl p-6 text-center cursor-pointer">
+                            <i class="fas fa-venus text-pink-500 text-2xl mb-2"></i>
+                            <p class="text-sm text-gray-500">اسحب صورة الأم هنا</p>
+                            <input type="file" class="hidden" accept="image/*">
+                        </div>
+                    </label>
+
+                    <label class="block">
+                        <span class="text-gray-400 mb-2 block">صورة الأب (30% من الملامح)</span>
+                        <div class="upload-box rounded-xl p-6 text-center cursor-pointer">
+                            <i class="fas fa-mars text-blue-500 text-2xl mb-2"></i>
+                            <p class="text-sm text-gray-500">اسحب صورة الأب هنا</p>
+                            <input type="file" class="hidden" accept="image/*">
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="glass-card p-8 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-6 flex items-center">
+                        <i class="fas fa-sliders-h ml-2 text-pink-500"></i> تخصيص الطفل
+                    </h2>
+
+                    <div class="space-y-6">
+                        <div>
+                            <label class="text-gray-400 mb-2 block">الجنس</label>
+                            <select id="gender" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-purple-500">
+                                <option value="boy">ولد</option>
+                                <option value="girl">بنت</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-gray-400 mb-2 block">المرحلة العمرية</label>
+                            <select id="age" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-purple-500">
+                                <option value="5">طفل (5 سنوات)</option>
+                                <option value="10">يافع (10 سنوات)</option>
+                                <option value="teen">مراهق (14-16 سنة)</option>
+                                <option value="25">شاب (25 سنة)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="generateBtn" class="gradient-btn w-full py-5 rounded-2xl font-bold text-xl mt-8 shadow-lg">
+                    إنشاء ملامح الطفل الآن
+                </button>
+            </div>
+        </div>
+
+        <div id="resultArea" class="mt-12 hidden">
+            <div class="glass-card p-4 text-center">
+                <p class="text-purple-400 mb-4 animate-pulse">جاري دمج الجينات وتحليل الملامح...</p>
+                <div class="aspect-square max-w-md mx-auto bg-white/5 rounded-2xl overflow-hidden relative">
+                    <img id="finalImage" src="" class="w-full h-full object-cover">
+                </div>
+                <button class="mt-6 text-gray-400 hover:text-white border border-white/10 px-6 py-2 rounded-lg">
+                    <i class="fas fa-download ml-2"></i> تحميل الصورة بدقة 4K
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center py-10 border-t border-white/5 text-gray-600 text-sm">
+        <p>© 2024 MY CHILD - جميع الحقوق محفوظة لذكاء الموقع الاصطناعي</p>
+    </footer>
+
+    <script>
+        const generateBtn = document.getElementById('generateBtn');
+        const resultArea = document.getElementById('resultArea');
+
+        generateBtn.addEventListener('click', () => {
+            // إظهار منطقة النتيجة وبدء الأنميشن
+            resultArea.classList.remove('hidden');
+            resultArea.scrollIntoView({ behavior: 'smooth' });
+            
+            // هنا سيتم ربط الكود بملف المحرك script.js لاحقاً لإرسال الصور لـ Gemini
+        });
+    </script>
+</body>
+</html>
