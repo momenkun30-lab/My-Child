@@ -1,135 +1,119 @@
 /**
- * MY CHILD - المحرك النهائي المحدث
- * يدعم المعاينة الفورية وإرسال الصور إلى Render
+ * MY CHILD - المحرك المحدث
+ * ميزات الكود: 
+ * 1. تصغير الصور برمجياً لضمان نجاح المعالجة.
+ * 2. دعم الواجهة الكلاسيكية (المعاينة داخل دوائر).
+ * 3. الربط المباشر مع سيرفر Render.
  */
-
-// 1. مكتبة البرومبتس الاحترافية
-const promptLibrary = {
-    "boy_5": "The 5-Year-Old Boy Hybrid Prompt: Ultra-realistic 4K portrait, 70% Mother resemblance, 30% Father. Soft childhood features.",
-    "girl_5": "The 5-Year-Old Girl Hybrid Prompt: Ultra-realistic 4K portrait, 70% Mother, 30% Father. Delicate facial features.",
-    "boy_10": "The 10-Year-Old Boy Hybrid Prompt: Ultra-realistic 4K, 70% Mother (eye shape), 30% Father (nose bridge). Rembrandt lighting.",
-    "girl_10": "The 10-Year-Old Girl Hybrid Prompt: Ultra-realistic 4K, 70% Mother, 30% Father. Sony A7R IV style.",
-    "boy_teen": "The Teenager Boy Hybrid Prompt: Aged 15, developing jawline. 70% Mother, 30% Father. Cinematic lighting.",
-    "girl_teen": "The Teenager Girl Hybrid Prompt: Aged 15, refined structure. 70% Mother, 30% Father. Editorial portrait.",
-    "boy_25": "The 25-Year-Old Young Man Hybrid Prompt: Mature structure. 70% Mother, 30% Father. Sony A7R V, 85mm.",
-    "girl_25": "The 25-Year-Old Young Woman Hybrid Prompt: Sophisticated woman. 70% Mother, 30% Father. 100mm macro style."
-};
 
 let motherBase64 = "";
 let fatherBase64 = "";
 
 /**
- * وظيفة معالجة رفع الصور وإظهار المعاينة فوراً
+ * وظيفة إعداد رفع الصور ومعالجتها
  */
-function handleImageUpload(inputId, previewId, placeholderId) {
+function setupUpload(inputId, previewId, placeholderId) {
     const input = document.getElementById(inputId);
-    const preview = document.getElementById(previewId);
-    const placeholder = document.getElementById(placeholderId);
-
     if (!input) return;
 
     input.addEventListener('change', function(e) {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            
-            reader.onload = function(event) {
-                // 1. عرض الصورة المختارة في الموقع
-                preview.src = event.target.result;
-                preview.style.display = 'block'; // إظهار عنصر الصورة
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = function() {
+                // إنشاء "كانفاس" لتصغير أبعاد الصورة
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
                 
-                // 2. إخفاء الأيقونة المؤقتة (Placeholder)
-                if (placeholder) placeholder.style.display = 'none';
+                // تحديد أبعاد 400x400 بكسل (مثالية للذكاء الاصطناعي وخفيفة)
+                canvas.width = 400;
+                canvas.height = 400;
                 
-                // 3. تحويل الصورة لصيغة Base64 لإرسالها للسيرفر
-                const baseData = event.target.result.split(',')[1];
-                if (inputId === 'motherInput') motherBase64 = baseData;
-                if (inputId === 'fatherInput') fatherBase64 = baseData;
+                // رسم الصورة بشكل مربع في المركز
+                ctx.drawImage(img, 0, 0, 400, 400);
                 
-                console.log("تم تحميل ومعاينة الصورة: " + inputId);
-            };
-            
-            reader.readAsDataURL(file);
-        }
+                // تحويل الصورة إلى نص Base64 بجودة مضغوطة 0.7
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+                
+                if(inputId === 'motherInput') {
+                    motherBase64 = compressedBase64;
+                } else {
+                    fatherBase64 = compressedBase64;
+                }
+
+                // تحديث واجهة المستخدم بالمعاينة
+                const preview = document.getElementById(previewId);
+                const placeholder = document.getElementById(placeholderId);
+                
+                preview.src = canvas.toDataURL('image/jpeg');
+                preview.style.display = 'block'; // إظهار الدائرة
+                if (placeholder) placeholder.style.display = 'none'; // إخفاء الأيقونة
+                
+                console.log("تمت معالجة وتصغير صورة: " + inputId);
+            }
+        };
+        reader.readAsDataURL(file);
     });
 }
 
-// تفعيل المعاينة للمدخلين (الأم والأب)
-handleImageUpload('motherInput', 'motherPreview', 'motherPlaceholder');
-handleImageUpload('fatherInput', 'fatherPreview', 'fatherPlaceholder');
+// تفعيل المعالجة للأم والأب فور تحميل الملف
+setupUpload('motherInput', 'motherPreview', 'motherPlaceholder');
+setupUpload('fatherInput', 'fatherPreview', 'fatherPlaceholder');
 
 /**
- * الدالة الرئيسية لإرسال البيانات لذكاء Gemini الاصطناعي
+ * وظيفة إرسال الطلب لذكاء Gemini الاصطناعي
  */
-async function generateChildImage() {
-    const gender = document.getElementById('gender').value;
-    const age = document.getElementById('age').value;
-    const generateBtn = document.getElementById('generateBtn');
-    const resultArea = document.getElementById('resultArea');
-    const finalImage = document.getElementById('finalImage');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-
-    // التأكد من وجود الصور
-    if (!motherBase64 || !fatherBase64) {
-        alert("يرجى رفع صورة الأم وصورة الأب لرؤية النتيجة.");
+document.getElementById('generateBtn').addEventListener('click', async () => {
+    // التحقق من رفع الصور
+    if(!motherBase64 || !fatherBase64) {
+        alert("يرجى رفع صورة الأم وصورة الأب أولاً");
         return;
     }
+    
+    const btn = document.getElementById('generateBtn');
+    const resultArea = document.getElementById('resultArea');
+    const finalImage = document.getElementById('finalImage');
 
-    const selectedKey = `${gender}_${age}`;
-    const prompt = promptLibrary[selectedKey];
-
-    // تجهيز واجهة المستخدم للتحميل
-    resultArea.classList.remove('hidden');
-    loadingOverlay.classList.remove('hidden');
-    generateBtn.disabled = true;
-    generateBtn.innerText = "جاري دمج الجينات... يرجى الانتظار";
-    finalImage.style.opacity = "0.3";
+    // تغيير حالة الزر أثناء التحميل
+    btn.innerText = "جاري دمج الجينات... يرجى الانتظار";
+    btn.disabled = true;
+    btn.style.opacity = "0.7";
 
     try {
-        // الرابط الرسمي لموقعك على Render
+        // إرسال البيانات إلى السيرفر الخاص بك على Render
         const response = await fetch('https://my-child.onrender.com/generate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                prompt: prompt,
+                prompt: `Hyper-realistic portrait of a ${document.getElementById('age').value} year old ${document.getElementById('gender').value}. Blend of both parents.`,
                 motherImage: motherBase64,
                 fatherImage: fatherBase64
             })
         });
 
         const data = await response.json();
-
-        if (data.imageUrl) {
-            // عرض الصورة الناتجة
+        
+        if(data.imageUrl) {
+            // إظهار منطقة النتيجة وعرض الصورة النهائية
+            resultArea.classList.remove('hidden');
             finalImage.src = data.imageUrl;
-            finalImage.style.opacity = "1";
             
-            // حفظ في الإحصائيات (LocalStorage)
-            saveToAdminStats(gender, age);
+            // تمرير الشاشة تلقائياً للأسفل لرؤية النتيجة
+            finalImage.scrollIntoView({ behavior: 'smooth' });
         } else {
-            alert("عذراً، واجه الذكاء الاصطناعي مشكلة. حاول مرة أخرى بصور أوضح.");
+            alert("واجه الذكاء الاصطناعي مشكلة في دمج الصور. يرجى التأكد من أن الوجوه واضحة جداً.");
         }
-
-    } catch (error) {
-        console.error("Error:", error);
-        alert("خطأ في الاتصال بالسيرفر. تأكد من تشغيل السيرفر على Render.");
+    } catch (e) {
+        alert("فشل الاتصال بالسيرفر. تأكد من أن خدمة Render في حالة 'Live'.");
+        console.error("Connection Error:", e);
     } finally {
-        generateBtn.disabled = false;
-        generateBtn.innerText = "إنشاء ملامح الطفل الآن";
-        loadingOverlay.classList.add('hidden');
+        // إعادة الزر لحالته الأصلية
+        btn.innerText = "إنشاء ملامح الطفل الآن";
+        btn.disabled = false;
+        btn.style.opacity = "1";
     }
-}
-
-// وظيفة حفظ الإحصائيات للوحة التحكم
-function saveToAdminStats(gender, age) {
-    let stats = JSON.parse(localStorage.getItem('adminStats')) || { total: 0, history: [] };
-    stats.total += 1;
-    stats.history.push({
-        type: `${gender === 'boy' ? 'ولد' : 'بنت'} (${age} سنة)`,
-        time: new Date().toLocaleTimeString('ar-EG')
-    });
-    localStorage.setItem('adminStats', JSON.stringify(stats));
-}
-
-// ربط الزر بالدالة
-document.getElementById('generateBtn').addEventListener('click', generateChildImage);
+});
