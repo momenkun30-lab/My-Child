@@ -1,52 +1,51 @@
 const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 
-// إعدادات للسماح برفع الصور وحل مشكلة الـ CORS
+// إعدادات السيرفر للتعامل مع البيانات والصور الكبيرة
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); 
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// إخبار السيرفر بمكان ملفات الموقع (الصور، التنسيقات، والجافا سكريبت)
+app.use(express.static(path.join(__dirname, '/')));
 
 const PORT = process.env.PORT || 3000;
 
-/**
- * نقطة النهاية لاستقبال طلبات إنشاء الصور
- */
+// --- توجيهات المسارات (Routing) لفتح الصفحات ---
+
+// فتح الصفحة الرئيسية عند الدخول على الرابط المباشر
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// فتح لوحة التحكم عند الدخول على رابط /admin
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// --- نقطة النهاية الخاصة بالذكاء الاصطناعي ---
 app.post('/generate', async (req, res) => {
     try {
         const { prompt, motherImage, fatherImage } = req.body;
-
-        // سحب مفتاح الـ API من إعدادات الاستضافة (Render)
         const API_KEY = process.env.GEMINI_API_KEY;
         
         if (!API_KEY) {
-            console.error("Error: GEMINI_API_KEY is not defined in environment variables.");
-            return res.status(500).json({ error: "تكوين السيرفر غير مكتمل: مفتاح الـ API مفقود." });
+            return res.status(500).json({ error: "API Key is missing on Render settings" });
         }
 
-        // رابط واجهة Gemini Pro Vision (أو النموذج المخصص للصور)
         const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
-        // تجهيز البيانات لإرسالها للذكاء الاصطناعي
         const requestBody = {
             contents: [{
                 parts: [
-                    { text: `Instructions: You are a professional genetic image blender. ${prompt}` },
-                    {
-                        inline_data: {
-                            mime_type: "image/jpeg",
-                            data: motherImage // تأتي من الفرونت إند كـ Base64
-                        }
-                    },
-                    {
-                        inline_data: {
-                            mime_type: "image/jpeg",
-                            data: fatherImage // تأتي من الفرونت إند كـ Base64
-                        }
-                    }
+                    { text: `Instructions: You are a professional genetic image blender. Create a child portrait based on these two parents. ${prompt}` },
+                    { inline_data: { mime_type: "image/jpeg", data: motherImage } },
+                    { inline_data: { mime_type: "image/jpeg", data: fatherImage } }
                 ]
             }],
             generationConfig: {
@@ -65,23 +64,21 @@ app.post('/generate', async (req, res) => {
 
         const data = await response.json();
 
-        // معالجة الرد وإرسال رابط الصورة أو النص الناتج للمستخدم
         if (data.candidates && data.candidates[0].content) {
-            // ملاحظة: اعتماداً على التحديثات، قد يعيد Gemini نصاً يصف الصورة أو رابطاً
-            const resultText = data.candidates[0].content.parts[0].text;
-            res.json({ imageUrl: resultText });
+            // إرسال النص الناتج (الذي يفترض أن يكون رابط الصورة أو وصفها)
+            res.json({ imageUrl: data.candidates[0].content.parts[0].text });
         } else {
-            console.error("Gemini API Error:", data);
-            res.status(400).json({ error: "فشل الذكاء الاصطناعي في معالجة الصور." });
+            console.error("Gemini Error:", data);
+            res.status(400).json({ error: "فشل الذكاء الاصطناعي في المعالجة" });
         }
 
     } catch (error) {
-        console.error("Server Crash:", error);
-        res.status(500).json({ error: "حدث خطأ داخلي في السيرفر." });
+        console.error("Server Error:", error);
+        res.status(500).json({ error: "حدث خطأ داخلي في الخادم" });
     }
 });
 
 // تشغيل السيرفر
 app.listen(PORT, () => {
-    console.log(`Server is live on port ${PORT}`);
+    console.log(`Server is running live on port ${PORT}`);
 });
