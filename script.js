@@ -1,4 +1,4 @@
-// 1. وظائف مساعدة لجلب العناصر وتحويل الملفات
+// 1. وظائف مساعدة لجلب العناصر وتحويل الصور
 const getEl = (id) => document.getElementById(id);
 
 const toBase64 = file => new Promise((resolve, reject) => {
@@ -8,7 +8,7 @@ const toBase64 = file => new Promise((resolve, reject) => {
     reader.onerror = error => reject(error);
 });
 
-// 2. إعداد معاينة الصور فور الرفع (إظهار الصور وإخفاء الأيقونات)
+// 2. إعداد معاينة الصور فور رفعها (لإظهار صور الأب والأم في الدوائر)
 function setupPreview(inputId, previewId, placeholderId) {
     const input = getEl(inputId);
     const preview = getEl(previewId);
@@ -18,7 +18,8 @@ function setupPreview(inputId, previewId, placeholderId) {
         input.onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
-                preview.src = URL.createObjectURL(file);
+                const url = URL.createObjectURL(file);
+                preview.src = url;
                 preview.style.display = 'block';
                 placeholder.style.display = 'none';
             }
@@ -26,51 +27,59 @@ function setupPreview(inputId, previewId, placeholderId) {
     }
 }
 
+// تفعيل المعاينة
 setupPreview('motherInput', 'motherPreview', 'motherPlaceholder');
 setupPreview('fatherInput', 'fatherPreview', 'fatherPlaceholder');
 
-// 3. الوظيفة الرئيسية لإنشاء الصورة
+// 3. الوظيفة الرئيسية لإنشاء ملامح الطفل (المحدثة بالعمر والنوع)
 async function generateChild() {
-    const mFile = getEl('motherInput').files[0];
-    const fFile = getEl('fatherInput').files[0];
+    const mInput = getEl('motherInput');
+    const fInput = getEl('fatherInput');
+    const gender = getEl('gender').value; // جلب القيمة (ولد/بنت)
+    const age = getEl('age').value;       // جلب القيمة (العمر)
+    
     const btn = getEl('generateBtn');
     const resultArea = getEl('resultArea');
     const finalImage = getEl('finalImage');
 
-    if (!mFile || !fFile) {
+    // التأكد من رفع الصور
+    if (!mInput.files[0] || !fInput.files[0]) {
         alert("الرجاء رفع صورة الأم والأب أولاً");
         return;
     }
 
     // تجهيز الواجهة للتحميل
-    btn.innerText = "جاري دمج ملامح الوالدين...";
+    const originalText = btn.innerText;
+    btn.innerText = "جاري دمج الملامح... انتظر قليلاً";
     btn.disabled = true;
     btn.style.opacity = "0.6";
-    resultArea.classList.add('hidden'); // إخفاء النتيجة السابقة إن وجدت
 
     try {
-        const mBase = await toBase64(mFile);
-        const fBase = await toBase64(fFile);
-
+        // تحويل الصور وإرسال الطلب للسيرفر مع (العمر والنوع)
         const response = await fetch('/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ motherImage: mBase, fatherImage: fBase })
+            body: JSON.stringify({ 
+                motherImage: await toBase64(mInput.files[0]), 
+                fatherImage: await toBase64(fInput.files[0]),
+                gender: gender, 
+                age: age        
+            })
         });
 
         const data = await response.json();
 
         if (data.imageUrl) {
-            // إضافة رقم عشوائي للرابط لمنع المتصفح من عرض الصورة القديمة المكسورة
+            // إضافة Timestamp للرابط لمنع المتصفح من عرض صورة قديمة أو مكسورة
             const finalUrl = data.imageUrl + "&t=" + new Date().getTime();
 
-            // إعداد مستمع للأخطاء في حال تأخر السيرفر في تجهيز الصورة
+            // إعداد مستمع للأخطاء (إعادة محاولة إذا لم تكن الصورة جاهزة)
             finalImage.onerror = function() {
-                console.log("إعادة محاولة تحميل الصورة...");
-                setTimeout(() => { finalImage.src = finalUrl; }, 2000);
+                console.log("الصورة قيد المعالجة، إعادة المحاولة...");
+                setTimeout(() => { finalImage.src = finalUrl; }, 2500);
             };
 
-            // إظهار النتيجة فقط عندما تكتمل الصورة تماماً
+            // إظهار النتيجة عند اكتمال تحميل الصورة
             finalImage.onload = function() {
                 resultArea.classList.remove('hidden');
                 finalImage.style.display = 'block';
@@ -78,20 +87,20 @@ async function generateChild() {
             };
 
             finalImage.src = finalUrl;
-            finalImage.crossOrigin = "anonymous"; // لحل مشاكل الحماية بين المواقع
+            finalImage.crossOrigin = "anonymous";
         } else {
-            alert("فشل الدمج: " + (data.error || "خطأ مجهول"));
+            alert("حدث خطأ في السيرفر: " + (data.error || "فشل الدمج"));
         }
 
     } catch (error) {
-        alert("خطأ في الاتصال بالسيرفر. تأكد أن Render يعمل (Live)");
-        console.error(error);
+        console.error("Fetch Error:", error);
+        alert("تعذر الاتصال بالسيرفر. تأكد من أن الموقع 'Live' على Render");
     } finally {
-        btn.innerText = "إنشاء ملامح الطفل الآن";
+        btn.innerText = originalText;
         btn.disabled = false;
         btn.style.opacity = "1";
     }
 }
 
-// ربط الوظيفة بالزر
+// 4. ربط الزر بالوظيفة
 getEl('generateBtn').addEventListener('click', generateChild);
