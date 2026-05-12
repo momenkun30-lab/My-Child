@@ -7,68 +7,37 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// إعدادات الأمان واستقبال البيانات
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, '/')));
-
-// التأكد من وجود مفتاح الـ API
-if (!process.env.GEMINI_API_KEY) {
-    console.error("خطأ: لم يتم العثور على مفتاح GEMINI_API_KEY في إعدادات Render");
-}
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post('/generate', async (req, res) => {
     try {
         const { motherImage, fatherImage, prompt } = req.body;
-
-        if (!motherImage || !fatherImage) {
-            return res.status(400).json({ error: "يرجى رفع صور الوالدين" });
-        }
-
+        
+        // استخدام الموديل الأحدث والأسرع
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        const requestBody = {
-            contents: [{
-                parts: [
-                    { text: prompt + " Generate a highly realistic photo of a child. 70% mother features, 30% father features. High quality portrait." },
-                    { inline_data: { mime_type: "image/jpeg", data: motherImage } },
-                    { inline_data: { mime_type: "image/jpeg", data: fatherImage } }
-                ]
-            }],
-            generationConfig: {
-                temperature: 0.9,
-                topP: 0.95,
-                maxOutputTokens: 1024,
-            },
-            safetySettings: [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-            ]
-        };
+        const result = await model.generateContent([
+            { text: prompt + " Task: Describe the child's face based on these parents for image generation." },
+            { inlineData: { mimeType: "image/jpeg", data: motherImage } },
+            { inlineData: { mimeType: "image/jpeg", data: fatherImage } }
+        ]);
 
-        const result = await model.generateContent(requestBody);
         const response = await result.response;
-        const text = response.text();
-
-        // فحص النتيجة: إذا كانت رابطاً أو وصفاً
-        if (text.includes("http")) {
-            res.json({ imageUrl: text.trim() });
-        } else {
-            // استخدام محرك خارجي موثوق في حال أعاد الوصف فقط
-            const finalUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?width=512&height=512&nologo=true`;
-            res.json({ imageUrl: finalUrl });
-        }
+        const aiText = response.text();
+        
+        // تحويل وصف الذكاء الاصطناعي لرابط صورة حقيقي
+        const finalImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(aiText)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000)}`;
+        
+        res.json({ imageUrl: finalImageUrl });
 
     } catch (error) {
-        console.error("Gemini Error:", error);
-        res.status(500).json({ error: "فشلت المعالجة، يرجى المحاولة مرة أخرى بصور أوضح." });
+        console.error("AI Error:", error);
+        res.status(500).json({ error: "فشلت المعالجة، يرجى المحاولة لاحقاً." });
     }
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
+app.listen(port, () => console.log(`Server started on port ${port}`));
