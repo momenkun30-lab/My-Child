@@ -1,7 +1,7 @@
 {
-  "name": "my-child-app",
+  "name": "red-line-child-generator",
   "version": "1.0.0",
-  "description": "AI Child Image Generator",
+  "description": "AI child generator using Gemini and Pollinations",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
