@@ -1,4 +1,7 @@
-// وظيفة مساعدة لتحويل الملفات إلى Base64
+// 1. وظائف مساعدة
+const getEl = (id) => document.getElementById(id);
+
+// تحويل الصورة إلى نص (Base64) لإرسالها عبر السيرفر
 const toBase64 = file => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -6,77 +9,91 @@ const toBase64 = file => new Promise((resolve, reject) => {
     reader.onerror = error => reject(error);
 });
 
-// 1. منطق معاينة الصور عند اختيارها
-function setupPreview(inputId, imgId, placeholderId) {
-    const input = document.getElementById(inputId);
-    const img = document.getElementById(imgId);
-    const placeholder = document.getElementById(placeholderId);
+// 2. إعداد معاينة الصور فور رفعها (لإظهار الصور في الدوائر البنفسجية)
+function setupPreview(inputId, previewId, placeholderId) {
+    const input = getEl(inputId);
+    const preview = getEl(previewId);
+    const placeholder = getEl(placeholderId);
 
-    input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const url = URL.createObjectURL(file);
-            img.src = url;
-            img.style.display = 'block'; // إظهار الصورة
-            placeholder.style.display = 'none'; // إخفاء الأيقونة (👨/👩)
-        }
-    };
+    if (input && preview && placeholder) {
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                preview.src = url;
+                preview.style.display = 'block'; // إظهار الصورة المرفوعة
+                placeholder.style.display = 'none'; // إخفاء الأيقونة (👩/👨)
+            }
+        };
+    }
 }
 
-// تفعيل المعاينة للأم والأب
+// تشغيل المعاينة للأم والأب
 setupPreview('motherInput', 'motherPreview', 'motherPlaceholder');
 setupPreview('fatherInput', 'fatherPreview', 'fatherPlaceholder');
 
-// 2. منطق زر الإنشاء
-document.getElementById('generateBtn').onclick = async function() {
-    const motherFile = document.getElementById('motherInput').files[0];
-    const fatherFile = document.getElementById('fatherInput').files[0];
-    const gender = document.getElementById('gender').value;
-    const age = document.getElementById('age').value;
-    const resultArea = document.getElementById('resultArea');
-    const finalImage = document.getElementById('finalImage');
-    const btn = this;
+// 3. الوظيفة الرئيسية لإنشاء ملامح الطفل
+async function generateChild() {
+    const motherFile = getEl('motherInput').files[0];
+    const fatherFile = getEl('fatherInput').files[0];
+    const gender = getEl('gender').value;
+    const age = getEl('age').value;
+    const generateBtn = getEl('generateBtn');
+    const resultArea = getEl('resultArea');
+    const finalImage = getEl('finalImage');
 
+    // التحقق من رفع الصور
     if (!motherFile || !fatherFile) {
         alert("الرجاء رفع صورة الأم وصورة الأب أولاً");
         return;
     }
 
-    // تغيير شكل الزر أثناء التحميل
-    const originalText = btn.innerText;
-    btn.innerText = "جاري الدمج... انتظر قليلاً";
-    btn.disabled = true;
-    btn.style.opacity = "0.7";
+    // تحديث حالة الزر أثناء المعالجة
+    const originalText = generateBtn.innerText;
+    generateBtn.innerText = "جاري دمج الجينات... يرجى الانتظار";
+    generateBtn.disabled = true;
+    generateBtn.style.opacity = "0.6";
 
     try {
+        // تحويل الصور
         const mBase64 = await toBase64(motherFile);
         const fBase64 = await toBase64(fatherFile);
 
+        // إرسال البيانات للسيرفر (Render)
         const response = await fetch('/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 motherImage: mBase64,
                 fatherImage: fBase64,
-                prompt: `A photorealistic portrait of a ${age} years old ${gender}.`
+                gender: gender,
+                age: age
             })
         });
 
         const data = await response.json();
 
         if (data.imageUrl) {
+            // إظهار النتيجة النهائية
             finalImage.src = data.imageUrl;
-            resultArea.classList.remove('hidden'); // إظهار قسم النتيجة
-            resultArea.scrollIntoView({ behavior: 'smooth' }); // النزول للنتيجة تلقائياً
+            resultArea.classList.remove('hidden'); // إزالة الإخفاء عن قسم النتيجة
+            
+            // النزول تلقائياً لمكان النتيجة
+            resultArea.scrollIntoView({ behavior: 'smooth' });
         } else {
-            alert("حدث خطأ في السيرفر: " + (data.error || "حاول مرة أخرى"));
+            alert("حدث خطأ في السيرفر: " + (data.error || "يرجى المحاولة مرة أخرى"));
         }
+
     } catch (error) {
-        console.error(error);
-        alert("فشل الاتصال بالسيرفر. تأكد أن موقع Render في حالة Live");
+        console.error("Error:", error);
+        alert("تعذر الاتصال بالسيرفر. تأكد من أن الموقع 'Live' على منصة Render.");
     } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-        btn.style.opacity = "1";
+        // إعادة الزر لحالته الطبيعية
+        generateBtn.innerText = originalText;
+        generateBtn.disabled = false;
+        generateBtn.style.opacity = "1";
     }
-};
+}
+
+// ربط وظيفة الإنشاء بالزر
+getEl('generateBtn').addEventListener('click', generateChild);
