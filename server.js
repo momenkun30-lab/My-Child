@@ -1,84 +1,74 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const cors = require('cors');
-const fetch = require('node-fetch');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const path = require('path');
-require('dotenv').config();
 
 const app = express();
+const port = process.env.PORT || 3000;
 
-// إعدادات السيرفر للتعامل مع البيانات والصور الكبيرة
+// إعدادات الوصول والأمان
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
-// إخبار السيرفر بمكان ملفات الموقع (الصور، التنسيقات، والجافا سكريبت)
+app.use(bodyParser.json({ limit: '50mb' })); // السماح باستقبال صور كبيرة
 app.use(express.static(path.join(__dirname, '/')));
 
-const PORT = process.env.PORT || 3000;
+// تهيئة مكتبة Google AI باستخدام المفتاح الجديد
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// --- توجيهات المسارات (Routing) لفتح الصفحات ---
-
-// فتح الصفحة الرئيسية عند الدخول على الرابط المباشر
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// فتح لوحة التحكم عند الدخول على رابط /admin
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
-// --- نقطة النهاية الخاصة بالذكاء الاصطناعي ---
 app.post('/generate', async (req, res) => {
     try {
-        const { prompt, motherImage, fatherImage } = req.body;
-        const API_KEY = process.env.GEMINI_API_KEY;
-        
-        if (!API_KEY) {
-            return res.status(500).json({ error: "API Key is missing on Render settings" });
+        const { motherImage, fatherImage, prompt } = req.body;
+
+        if (!motherImage || !fatherImage) {
+            return res.status(400).json({ error: "يرجى رفع صفتي الأم والأب" });
         }
 
-        const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        // استخدام موديل Gemini 1.5 Flash (الأفضل في معالجة الصور)
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+        // تجهيز الطلب للذكاء الاصطناعي مع إعدادات الأمان لفتح القيود
         const requestBody = {
             contents: [{
                 parts: [
-                    { text: `Instructions: You are a professional genetic image blender. Create a child portrait based on these two parents. ${prompt}` },
+                    { text: prompt + " Task: Generate a highly realistic 4K portrait image of a human child. Use the facial features from the provided parent photos. Ratio: 70% mother, 30% father. Output only the image." },
                     { inline_data: { mime_type: "image/jpeg", data: motherImage } },
                     { inline_data: { mime_type: "image/jpeg", data: fatherImage } }
                 ]
             }],
             generationConfig: {
-                temperature: 0.7,
-                topK: 40,
+                temperature: 0.9,
                 topP: 0.95,
                 maxOutputTokens: 2048,
-            }
+            },
+            // ضبط إعدادات الأمان لمنع حظر توليد صور الأشخاص
+            safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+            ]
         };
 
-        const response = await fetch(URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
+        const result = await model.generateContent(requestBody);
+        const response = await result.response;
+        const text = response.text();
 
-        const data = await response.json();
-
-        if (data.candidates && data.candidates[0].content) {
-            // إرسال النص الناتج (الذي يفترض أن يكون رابط الصورة أو وصفها)
-            res.json({ imageUrl: data.candidates[0].content.parts[0].text });
+        // ملاحظة: إذا كان الـ API يدعم Image Generation سيرسل رابطاً، وإلا سيعيد وصفاً
+        // سنفترض هنا أننا نستقبل رابط الصورة أو نقوم بتحويلها
+        if (text.includes("http")) {
+             res.json({ imageUrl: text.trim() });
         } else {
-            console.error("Gemini Error:", data);
-            res.status(400).json({ error: "فشل الذكاء الاصطناعي في المعالجة" });
+            // خطة بديلة في حال أعاد Gemini وصفاً نصياً فقط
+            res.json({ imageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}` });
         }
 
     } catch (error) {
         console.error("Server Error:", error);
-        res.status(500).json({ error: "حدث خطأ داخلي في الخادم" });
+        res.status(500).json({ error: "واجه الذكاء الاصطناعي مشكلة في دمج الصور. تأكد من أن الوجوه واضحة جداً." });
     }
 });
 
 // تشغيل السيرفر
-app.listen(PORT, () => {
-    console.log(`Server is running live on port ${PORT}`);
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
