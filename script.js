@@ -1,62 +1,82 @@
-// وظيفة ذكية لإيجاد العناصر بأي اسم محتمل
-const getEl = (id) => document.getElementById(id);
+// وظيفة مساعدة لتحويل الملفات إلى Base64
+const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = error => reject(error);
+});
 
-// 1. معاينة الصور فور الرفع
-const setupPreview = (inputId, previewId) => {
-    const input = getEl(inputId);
-    const preview = getEl(previewId);
-    if (input && preview) {
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) preview.src = URL.createObjectURL(file);
-        };
+// 1. منطق معاينة الصور عند اختيارها
+function setupPreview(inputId, imgId, placeholderId) {
+    const input = document.getElementById(inputId);
+    const img = document.getElementById(imgId);
+    const placeholder = document.getElementById(placeholderId);
+
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const url = URL.createObjectURL(file);
+            img.src = url;
+            img.style.display = 'block'; // إظهار الصورة
+            placeholder.style.display = 'none'; // إخفاء الأيقونة (👨/👩)
+        }
+    };
+}
+
+// تفعيل المعاينة للأم والأب
+setupPreview('motherInput', 'motherPreview', 'motherPlaceholder');
+setupPreview('fatherInput', 'fatherPreview', 'fatherPlaceholder');
+
+// 2. منطق زر الإنشاء
+document.getElementById('generateBtn').onclick = async function() {
+    const motherFile = document.getElementById('motherInput').files[0];
+    const fatherFile = document.getElementById('fatherInput').files[0];
+    const gender = document.getElementById('gender').value;
+    const age = document.getElementById('age').value;
+    const resultArea = document.getElementById('resultArea');
+    const finalImage = document.getElementById('finalImage');
+    const btn = this;
+
+    if (!motherFile || !fatherFile) {
+        alert("الرجاء رفع صورة الأم وصورة الأب أولاً");
+        return;
     }
-};
 
-// تشغيل المعاينة للأم والأب
-setupPreview('motherInput', 'motherPreview');
-setupPreview('fatherInput', 'fatherPreview');
-
-// 2. الوظيفة الرئيسية للدمج
-async function generateChild() {
-    // محاولة جلب العناصر
-    const mInput = getEl('motherInput');
-    const fInput = getEl('fatherInput');
-    const resImg = getEl('resultImage');
-    const loader = getEl('loadingMessage') || { style: {} };
-
-    if (!mInput?.files[0] || !fInput?.files[0]) {
-        return alert("من فضلك اختر صورتين أولاً!");
-    }
-
-    loader.style.display = 'block';
-    if(resImg) resImg.style.display = 'none';
+    // تغيير شكل الزر أثناء التحميل
+    const originalText = btn.innerText;
+    btn.innerText = "جاري الدمج... انتظر قليلاً";
+    btn.disabled = true;
+    btn.style.opacity = "0.7";
 
     try {
-        const toB64 = (file) => new Promise((res) => {
-            const r = new FileReader(); r.readAsDataURL(file);
-            r.onload = () => res(r.result.split(',')[1]);
-        });
+        const mBase64 = await toBase64(motherFile);
+        const fBase64 = await toBase64(fatherFile);
 
         const response = await fetch('/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                motherImage: await toB64(mInput.files[0]),
-                fatherImage: await toB64(fInput.files[0])
+                motherImage: mBase64,
+                fatherImage: fBase64,
+                prompt: `A photorealistic portrait of a ${age} years old ${gender}.`
             })
         });
 
         const data = await response.json();
-        if (data.imageUrl && resImg) {
-            resImg.src = data.imageUrl;
-            resImg.style.display = 'block';
+
+        if (data.imageUrl) {
+            finalImage.src = data.imageUrl;
+            resultArea.classList.remove('hidden'); // إظهار قسم النتيجة
+            resultArea.scrollIntoView({ behavior: 'smooth' }); // النزول للنتيجة تلقائياً
         } else {
-            alert("خطأ من السيرفر: " + (data.error || "فشل الدمج"));
+            alert("حدث خطأ في السيرفر: " + (data.error || "حاول مرة أخرى"));
         }
-    } catch (err) {
-        alert("حدث خطأ في الاتصال بالسيرفر. تأكد أن الموقع Live في Render");
+    } catch (error) {
+        console.error(error);
+        alert("فشل الاتصال بالسيرفر. تأكد أن موقع Render في حالة Live");
     } finally {
-        loader.style.display = 'none';
+        btn.innerText = originalText;
+        btn.disabled = false;
+        btn.style.opacity = "1";
     }
-}
+};
